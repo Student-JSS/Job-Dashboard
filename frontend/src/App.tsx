@@ -119,7 +119,7 @@ export function App() {
 
       showNotice(
         'success',
-        `Job "${updated.title}" transitioned to "${updated.status}".`,
+        `Job "${updated.title}" moved to "${updated.status}".`,
         'Status Updated',
       );
       await loadData(true);
@@ -198,7 +198,7 @@ export function App() {
   });
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
       {/* Header */}
       <Header
         backendOnline={backendOnline}
@@ -234,18 +234,18 @@ export function App() {
 
         {/* Queue Display */}
         {isLoading ? (
-          <div className="py-20 flex flex-col items-center justify-center text-slate-500 space-y-2">
-            <Loader2 className="w-7 h-7 animate-spin text-indigo-500" />
+          <div className="py-20 flex flex-col items-center justify-center text-slate-400 space-y-2">
+            <Loader2 className="w-7 h-7 animate-spin text-slate-600" />
             <p className="text-xs">Loading queue items...</p>
           </div>
         ) : filteredJobs.length === 0 ? (
-          <div className="py-14 px-4 text-center rounded-2xl border border-slate-800/80 bg-slate-900/30 flex flex-col items-center justify-center space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-slate-800/60 flex items-center justify-center text-slate-400">
+          <div className="py-14 px-4 text-center rounded-2xl border border-gray-200 bg-white flex flex-col items-center justify-center space-y-3 shadow-xs">
+            <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500">
               <Inbox className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-white">No jobs found</h3>
-              <p className="text-xs text-slate-400 mt-1 max-w-sm">
+              <h3 className="text-sm font-semibold text-gray-900">No jobs found</h3>
+              <p className="text-xs text-gray-500 mt-1 max-w-sm">
                 {searchQuery || selectedStatus !== 'all'
                   ? 'No jobs match your filter criteria.'
                   : 'Your job queue is currently empty.'}
@@ -254,7 +254,7 @@ export function App() {
             <div className="flex flex-wrap items-center gap-2 pt-1">
               <button
                 onClick={() => setIsCreateOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition cursor-pointer shadow-xs"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-gray-900 hover:bg-black rounded-lg transition cursor-pointer shadow-xs"
               >
                 <Plus className="w-3.5 h-3.5" />
                 Create Job
@@ -263,9 +263,9 @@ export function App() {
               {jobs.length === 0 && (
                 <button
                   onClick={handleSeedDemoJobs}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 hover:text-gray-900 bg-white hover:bg-gray-50 border border-gray-300 rounded-lg transition cursor-pointer shadow-xs"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <Sparkles className="w-3.5 h-3.5 text-amber-600" />
                   Seed Demo Jobs
                 </button>
               )}
@@ -294,7 +294,7 @@ export function App() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-900/80 py-3.5 px-6 text-center text-[11px] text-slate-500">
+      <footer className="border-t border-gray-200 bg-white py-3.5 px-6 text-center text-xs text-gray-400">
         Mini Job Queue Dashboard • React + NestJS + SQLite with Atomic CAS Concurrency Control
       </footer>
 

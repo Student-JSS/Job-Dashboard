@@ -19,37 +19,37 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleAutoRefresh,
 }) => {
   return (
-    <header className="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md sticky top-0 z-40 transition-colors">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+    <header className="border-b border-gray-200 bg-white sticky top-0 z-40">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">
         {/* Brand & Status */}
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-sm shadow-indigo-500/30">
+          <div className="w-8 h-8 rounded-lg bg-gray-900 flex items-center justify-center text-white shadow-xs">
             <Layers className="w-4 h-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-sm font-semibold text-white tracking-tight">
+              <h1 className="text-sm font-semibold text-gray-900 tracking-tight">
                 Job Queue Dashboard
               </h1>
-              <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700/60">
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 border border-gray-200">
                 v1.0
               </span>
             </div>
-            <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
+            <div className="flex items-center gap-1.5 text-xs text-gray-500">
               <span
                 className={`w-1.5 h-1.5 rounded-full ${
                   backendOnline === true
-                    ? 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]'
+                    ? 'bg-emerald-500'
                     : backendOnline === false
                     ? 'bg-rose-500'
-                    : 'bg-slate-500'
+                    : 'bg-gray-400'
                 }`}
               />
-              <span className="text-slate-400">
+              <span>
                 {backendOnline === true
                   ? 'API Connected'
                   : backendOnline === false
-                  ? 'API Disconnected'
+                  ? 'API Offline'
                   : 'Connecting...'}
               </span>
             </div>
@@ -63,26 +63,26 @@ export const Header: React.FC<HeaderProps> = ({
             href="http://localhost:3001/api/docs"
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-slate-400 hover:text-white bg-slate-900/60 hover:bg-slate-800 border border-slate-800 rounded-lg transition"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 hover:text-gray-900 bg-white hover:bg-gray-50 border border-gray-300 rounded-lg transition"
             title="Open Swagger API Reference"
           >
-            <BookOpen className="w-3.5 h-3.5 text-slate-400" />
+            <BookOpen className="w-3.5 h-3.5 text-gray-500" />
             <span className="hidden sm:inline">Swagger API</span>
           </a>
 
           {/* Auto Refresh toggle */}
           <button
             onClick={onToggleAutoRefresh}
-            className={`px-2.5 py-1.5 text-xs rounded-lg border transition cursor-pointer flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition cursor-pointer flex items-center gap-1.5 ${
               autoRefresh
-                ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-300'
-                : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200'
+                ? 'bg-blue-50 border-blue-200 text-blue-700'
+                : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
             }`}
             title="Auto-refresh every 4 seconds"
           >
             <span
               className={`w-1.5 h-1.5 rounded-full ${
-                autoRefresh ? 'bg-indigo-400 animate-ping' : 'bg-slate-500'
+                autoRefresh ? 'bg-blue-600' : 'bg-gray-400'
               }`}
             />
             <span className="hidden md:inline">Auto-Sync</span>
@@ -92,11 +92,11 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={onRefresh}
             disabled={isRefreshing}
-            className="p-1.5 sm:px-2.5 sm:py-1.5 text-xs font-medium text-slate-400 hover:text-white bg-slate-900/60 hover:bg-slate-800 border border-slate-800 rounded-lg transition disabled:opacity-50 cursor-pointer inline-flex items-center gap-1.5"
+            className="p-1.5 sm:px-3 sm:py-1.5 text-xs font-medium text-gray-700 hover:text-gray-900 bg-white hover:bg-gray-50 border border-gray-300 rounded-lg transition disabled:opacity-50 cursor-pointer inline-flex items-center gap-1.5"
             title="Refresh jobs"
           >
             <RefreshCw
-              className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-indigo-400' : ''}`}
+              className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-gray-600' : 'text-gray-500'}`}
             />
             <span className="hidden sm:inline">Refresh</span>
           </button>
@@ -104,7 +104,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Create Job CTA */}
           <button
             onClick={onOpenCreate}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg shadow-sm transition cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium text-white bg-gray-900 hover:bg-black rounded-lg transition cursor-pointer shadow-xs"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>New Job</span>

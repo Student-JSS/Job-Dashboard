@@ -29,27 +29,27 @@ export const NotificationBanner: React.FC<NotificationBannerProps> = ({
 
   const configs = {
     error: {
-      bg: 'bg-slate-900 border-rose-500/40 text-rose-200',
+      border: 'border-rose-300',
       icon: AlertTriangle,
-      iconColor: 'text-rose-400',
+      iconColor: 'text-rose-600',
       defaultTitle: 'Error',
     },
     conflict: {
-      bg: 'bg-slate-900 border-amber-500/40 text-amber-200',
+      border: 'border-amber-300',
       icon: AlertTriangle,
-      iconColor: 'text-amber-400',
+      iconColor: 'text-amber-600',
       defaultTitle: 'Concurrency Conflict (409)',
     },
     success: {
-      bg: 'bg-slate-900 border-emerald-500/40 text-emerald-200',
+      border: 'border-emerald-300',
       icon: CheckCircle2,
-      iconColor: 'text-emerald-400',
+      iconColor: 'text-emerald-600',
       defaultTitle: 'Success',
     },
     info: {
-      bg: 'bg-slate-900 border-blue-500/40 text-blue-200',
+      border: 'border-blue-300',
       icon: Info,
-      iconColor: 'text-blue-400',
+      iconColor: 'text-blue-600',
       defaultTitle: 'Notice',
     },
   };
@@ -58,24 +58,24 @@ export const NotificationBanner: React.FC<NotificationBannerProps> = ({
   const Icon = config.icon;
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 max-w-sm w-full animate-in slide-in-from-bottom-5 fade-in duration-200 shadow-2xl">
+    <div className="fixed bottom-5 right-5 z-50 max-w-sm w-full animate-in slide-in-from-bottom-4 fade-in duration-200 shadow-xl">
       <div
-        className={`p-3.5 rounded-xl border flex items-start justify-between gap-3 shadow-xl ${config.bg}`}
+        className={`p-3.5 rounded-xl border bg-white ${config.border} flex items-start justify-between gap-3 shadow-lg`}
       >
         <div className="flex items-start gap-2.5">
           <Icon className={`w-4 h-4 shrink-0 mt-0.5 ${config.iconColor}`} />
           <div className="text-xs">
-            <p className="font-semibold text-white">
+            <p className="font-semibold text-gray-900">
               {notification.title || config.defaultTitle}
             </p>
-            <p className="mt-0.5 text-slate-300 leading-relaxed text-[11px]">
+            <p className="mt-0.5 text-gray-600 leading-relaxed">
               {notification.message}
             </p>
           </div>
         </div>
         <button
           onClick={onDismiss}
-          className="text-slate-400 hover:text-white p-0.5 rounded cursor-pointer shrink-0"
+          className="text-gray-400 hover:text-gray-600 p-0.5 rounded cursor-pointer shrink-0"
         >
           <X className="w-3.5 h-3.5" />
         </button>

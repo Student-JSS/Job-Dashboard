@@ -11,27 +11,27 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, size = 'md' })
   const configs = {
     pending: {
       label: 'Pending',
-      bg: 'bg-amber-500/10 text-amber-300 border-amber-500/25',
-      dot: 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.5)]',
+      badge: 'bg-amber-50 text-amber-800 border-amber-200',
+      dot: 'bg-amber-500',
       icon: Clock,
     },
     running: {
       label: 'Running',
-      bg: 'bg-blue-500/10 text-blue-300 border-blue-500/25',
-      dot: 'bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.6)] animate-pulse',
+      badge: 'bg-blue-50 text-blue-800 border-blue-200',
+      dot: 'bg-blue-500 animate-pulse',
       icon: Loader2,
       animateIcon: true,
     },
     completed: {
       label: 'Completed',
-      bg: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/25',
-      dot: 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]',
+      badge: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+      dot: 'bg-emerald-500',
       icon: CheckCircle2,
     },
     failed: {
       label: 'Failed',
-      bg: 'bg-rose-500/10 text-rose-300 border-rose-500/25',
-      dot: 'bg-rose-400 shadow-[0_0_8px_rgba(244,63,94,0.5)]',
+      badge: 'bg-rose-50 text-rose-800 border-rose-200',
+      dot: 'bg-rose-500',
       icon: XCircle,
     },
   };
@@ -41,14 +41,14 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, size = 'md' })
   const animateIcon = (config as any).animateIcon;
 
   const sizeClasses = {
-    sm: 'text-[11px] px-2 py-0.5 gap-1.5',
+    sm: 'text-xs px-2 py-0.5 gap-1.5 font-medium',
     md: 'text-xs px-2.5 py-1 gap-1.5 font-medium',
-    lg: 'text-xs px-3 py-1.5 gap-2 font-medium',
+    lg: 'text-sm px-3 py-1.5 gap-2 font-medium',
   };
 
   return (
     <span
-      className={`inline-flex items-center rounded-full border tracking-wide select-none ${config.bg} ${sizeClasses[size]}`}
+      className={`inline-flex items-center rounded-md border select-none ${config.badge} ${sizeClasses[size]}`}
     >
       <span className={`h-1.5 w-1.5 rounded-full ${config.dot}`} />
       <Icon className={`w-3.5 h-3.5 ${animateIcon ? 'animate-spin' : ''}`} />
