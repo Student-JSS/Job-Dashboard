@@ -95,58 +95,58 @@ export const JobCard: React.FC<JobCardProps> = ({
   const isTerminal = job.status === 'completed' || job.status === 'failed';
 
   return (
-    <div className="bg-white border border-gray-200 hover:border-gray-300 rounded-xl p-4 transition duration-150 shadow-xs">
+    <div className="group relative bg-[#0e1320]/80 hover:bg-[#121829] border border-white/[0.08] hover:border-indigo-500/30 rounded-xl p-4 transition-all duration-200 shadow-[0_4px_20px_rgba(0,0,0,0.15)]">
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
         {/* Left Info */}
         <div className="space-y-1.5 min-w-0 flex-1">
-          {/* Badges */}
+          {/* Metadata badges row */}
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={copyId}
               title="Click to copy full ID"
-              className="text-[11px] font-mono px-2 py-0.5 rounded bg-gray-50 text-gray-600 hover:text-gray-900 border border-gray-200 hover:border-gray-300 inline-flex items-center gap-1.5 transition cursor-pointer"
+              className="text-[11px] font-mono px-2 py-0.5 rounded bg-white/[0.04] text-slate-300 hover:text-white border border-white/[0.08] hover:border-white/[0.18] inline-flex items-center gap-1.5 transition cursor-pointer"
             >
               <span>{job.id.slice(0, 8)}...</span>
               {copied ? (
-                <Check className="w-3 h-3 text-emerald-600" />
+                <Check className="w-3 h-3 text-emerald-400" />
               ) : (
-                <Copy className="w-3 h-3 text-gray-400" />
+                <Copy className="w-3 h-3 text-slate-500 group-hover:text-slate-400" />
               )}
             </button>
 
-            <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-gray-100 text-gray-700 border border-gray-200 font-medium">
+            <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/25">
               {job.type}
             </span>
 
             <span
-              className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-gray-50 text-gray-500 border border-gray-100"
-              title="Version"
+              className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/[0.04] text-slate-400 border border-white/[0.06]"
+              title="Optimistic Concurrency Version"
             >
               v{job.version}
             </span>
 
-            <span className="text-[11px] text-gray-400 ml-auto sm:ml-0 font-mono">
+            <span className="text-[11px] text-slate-400 ml-auto sm:ml-0 font-mono">
               {formatDate(job.createdAt)} at {formatTime(job.createdAt)}
             </span>
           </div>
 
           {/* Title */}
           <h4
-            className="text-sm font-medium text-gray-900 truncate pt-0.5"
+            className="text-sm font-medium text-slate-100 group-hover:text-white transition-colors truncate pt-0.5"
             title={job.title}
           >
             {job.title}
           </h4>
         </div>
 
-        {/* Right Status */}
+        {/* Right Status badge */}
         <div className="flex items-center sm:self-start">
           <StatusBadge status={job.status} size="sm" />
         </div>
       </div>
 
       {/* Actions footer */}
-      <div className="mt-3.5 pt-3 border-t border-gray-100 flex items-center justify-between gap-2">
+      <div className="mt-3.5 pt-3 border-t border-white/[0.06] flex items-center justify-between gap-2">
         {/* State actions */}
         <div className="flex items-center gap-2">
           {job.status === 'pending' && (
@@ -154,7 +154,7 @@ export const JobCard: React.FC<JobCardProps> = ({
               <button
                 onClick={() => handleStatusClick('running')}
                 disabled={actionLoading !== null}
-                className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-md bg-blue-600 hover:bg-blue-700 text-white transition disabled:opacity-50 cursor-pointer shadow-xs"
+                className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition disabled:opacity-50 cursor-pointer shadow-[0_0_12px_rgba(37,99,235,0.4)]"
               >
                 {actionLoading === 'running' ? (
                   <Loader2 className="w-3 h-3 animate-spin" />
@@ -167,13 +167,13 @@ export const JobCard: React.FC<JobCardProps> = ({
               <button
                 onClick={handleSimulateClick}
                 disabled={actionLoading !== null}
-                title="Simulate 2 browser tabs hitting Start at the exact same millisecond"
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 transition disabled:opacity-50 cursor-pointer"
+                title="Simulate 2 browser tabs hitting Start Running at the exact same millisecond"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/25 transition disabled:opacity-50 cursor-pointer"
               >
                 {actionLoading === 'race' ? (
                   <Loader2 className="w-3 h-3 animate-spin" />
                 ) : (
-                  <Zap className="w-3 h-3 text-amber-600" />
+                  <Zap className="w-3 h-3 text-amber-400" />
                 )}
                 Simulate Race
               </button>
@@ -185,7 +185,7 @@ export const JobCard: React.FC<JobCardProps> = ({
               <button
                 onClick={() => handleStatusClick('completed')}
                 disabled={actionLoading !== null}
-                className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-md bg-emerald-600 hover:bg-emerald-700 text-white transition disabled:opacity-50 cursor-pointer shadow-xs"
+                className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition disabled:opacity-50 cursor-pointer shadow-[0_0_12px_rgba(16,185,129,0.4)]"
               >
                 {actionLoading === 'completed' ? (
                   <Loader2 className="w-3 h-3 animate-spin" />
@@ -198,7 +198,7 @@ export const JobCard: React.FC<JobCardProps> = ({
               <button
                 onClick={() => handleStatusClick('failed')}
                 disabled={actionLoading !== null}
-                className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-md bg-rose-600 hover:bg-rose-700 text-white transition disabled:opacity-50 cursor-pointer shadow-xs"
+                className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-lg bg-rose-600 hover:bg-rose-500 text-white transition disabled:opacity-50 cursor-pointer shadow-[0_0_12px_rgba(244,63,94,0.4)]"
               >
                 {actionLoading === 'failed' ? (
                   <Loader2 className="w-3 h-3 animate-spin" />
@@ -211,21 +211,21 @@ export const JobCard: React.FC<JobCardProps> = ({
           )}
 
           {isTerminal && (
-            <span className="inline-flex items-center gap-1 text-xs text-gray-500 select-none">
-              <Lock className="w-3.5 h-3.5 text-gray-400" /> Terminal state
+            <span className="inline-flex items-center gap-1 text-[11px] text-slate-400 select-none">
+              <Lock className="w-3 h-3 text-slate-500" /> Terminal state
             </span>
           )}
         </div>
 
-        {/* Delete */}
+        {/* Delete action */}
         <button
           onClick={handleDeleteClick}
           disabled={actionLoading !== null}
-          className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition disabled:opacity-50 cursor-pointer"
+          className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-md transition disabled:opacity-50 cursor-pointer"
           title="Delete Job"
         >
           {actionLoading === 'delete' ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-rose-600" />
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-rose-400" />
           ) : (
             <Trash2 className="w-3.5 h-3.5" />
           )}

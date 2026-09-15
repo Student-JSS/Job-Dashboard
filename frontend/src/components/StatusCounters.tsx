@@ -27,16 +27,20 @@ export const StatusCounters: React.FC<StatusCountersProps> = ({
     pct?: string;
     icon: React.ElementType;
     iconColor: string;
+    accentTop: string;
     activeBorder: string;
+    activeGlow: string;
   }> = [
     {
       key: 'all',
-      label: 'Total Jobs',
+      label: 'Total Queue',
       count: total,
       pct: '100%',
       icon: Layers,
-      iconColor: 'text-gray-600',
-      activeBorder: 'border-gray-900 bg-gray-50 ring-1 ring-gray-900',
+      iconColor: 'text-indigo-400',
+      accentTop: 'before:bg-indigo-500',
+      activeBorder: 'border-indigo-500/60 bg-indigo-950/20 text-indigo-200',
+      activeGlow: 'shadow-[0_0_20px_rgba(99,102,241,0.15)]',
     },
     {
       key: 'pending',
@@ -44,8 +48,10 @@ export const StatusCounters: React.FC<StatusCountersProps> = ({
       count: stats?.pending ?? 0,
       pct: calculatePct(stats?.pending ?? 0),
       icon: Clock,
-      iconColor: 'text-amber-600',
-      activeBorder: 'border-amber-600 bg-amber-50/30 ring-1 ring-amber-600',
+      iconColor: 'text-amber-400',
+      accentTop: 'before:bg-amber-500',
+      activeBorder: 'border-amber-500/60 bg-amber-950/20 text-amber-200',
+      activeGlow: 'shadow-[0_0_20px_rgba(245,158,11,0.15)]',
     },
     {
       key: 'running',
@@ -53,8 +59,10 @@ export const StatusCounters: React.FC<StatusCountersProps> = ({
       count: stats?.running ?? 0,
       pct: calculatePct(stats?.running ?? 0),
       icon: Loader2,
-      iconColor: 'text-blue-600',
-      activeBorder: 'border-blue-600 bg-blue-50/30 ring-1 ring-blue-600',
+      iconColor: 'text-cyan-400',
+      accentTop: 'before:bg-cyan-500',
+      activeBorder: 'border-cyan-500/60 bg-cyan-950/20 text-cyan-200',
+      activeGlow: 'shadow-[0_0_20px_rgba(6,182,212,0.15)]',
     },
     {
       key: 'completed',
@@ -62,8 +70,10 @@ export const StatusCounters: React.FC<StatusCountersProps> = ({
       count: stats?.completed ?? 0,
       pct: calculatePct(stats?.completed ?? 0),
       icon: CheckCircle2,
-      iconColor: 'text-emerald-600',
-      activeBorder: 'border-emerald-600 bg-emerald-50/30 ring-1 ring-emerald-600',
+      iconColor: 'text-emerald-400',
+      accentTop: 'before:bg-emerald-500',
+      activeBorder: 'border-emerald-500/60 bg-emerald-950/20 text-emerald-200',
+      activeGlow: 'shadow-[0_0_20px_rgba(16,185,129,0.15)]',
     },
     {
       key: 'failed',
@@ -71,8 +81,10 @@ export const StatusCounters: React.FC<StatusCountersProps> = ({
       count: stats?.failed ?? 0,
       pct: calculatePct(stats?.failed ?? 0),
       icon: XCircle,
-      iconColor: 'text-rose-600',
-      activeBorder: 'border-rose-600 bg-rose-50/30 ring-1 ring-rose-600',
+      iconColor: 'text-rose-400',
+      accentTop: 'before:bg-rose-500',
+      activeBorder: 'border-rose-500/60 bg-rose-950/20 text-rose-200',
+      activeGlow: 'shadow-[0_0_20px_rgba(244,63,94,0.15)]',
     },
   ];
 
@@ -86,14 +98,14 @@ export const StatusCounters: React.FC<StatusCountersProps> = ({
           <button
             key={card.key}
             onClick={() => onSelectFilter(card.key)}
-            className={`p-3.5 sm:p-4 rounded-xl text-left border transition cursor-pointer select-none bg-white ${
+            className={`group relative overflow-hidden p-3.5 sm:p-4 rounded-xl text-left border transition-all duration-200 cursor-pointer select-none before:absolute before:top-0 before:left-0 before:right-0 before:h-[2px] ${card.accentTop} ${
               isActive
-                ? `${card.activeBorder} shadow-xs`
-                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/60 shadow-xs'
+                ? `${card.activeBorder} ${card.activeGlow} bg-[#111728]`
+                : 'bg-[#0e1320]/90 border-white/[0.08] hover:border-white/[0.18] hover:bg-[#131a2c]'
             }`}
           >
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 group-hover:text-slate-200 transition-colors">
                 {card.label}
               </span>
               <Icon
@@ -105,11 +117,11 @@ export const StatusCounters: React.FC<StatusCountersProps> = ({
               />
             </div>
             <div className="flex items-baseline justify-between mt-1">
-              <div className="text-2xl font-bold tracking-tight text-gray-900 font-mono">
+              <div className="text-2xl font-bold tracking-tight text-white font-mono">
                 {card.count}
               </div>
               {card.pct && (
-                <span className="text-xs text-gray-400 font-mono">
+                <span className="text-xs text-slate-400 font-mono">
                   {card.pct}
                 </span>
               )}

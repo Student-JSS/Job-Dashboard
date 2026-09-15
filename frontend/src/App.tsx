@@ -198,7 +198,7 @@ export function App() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
+    <div className="min-h-screen flex flex-col text-slate-100 selection:bg-indigo-500/30 selection:text-indigo-200">
       {/* Header */}
       <Header
         backendOnline={backendOnline}
@@ -214,7 +214,7 @@ export function App() {
         {/* State Flow Diagram */}
         <StateFlowDiagram />
 
-        {/* Metrics Overview */}
+        {/* Metrics Overview Cards with top color stripes */}
         <StatusCounters
           stats={stats}
           selectedFilter={selectedStatus}
@@ -234,18 +234,18 @@ export function App() {
 
         {/* Queue Display */}
         {isLoading ? (
-          <div className="py-20 flex flex-col items-center justify-center text-slate-400 space-y-2">
-            <Loader2 className="w-7 h-7 animate-spin text-slate-600" />
-            <p className="text-xs">Loading queue items...</p>
+          <div className="py-20 flex flex-col items-center justify-center text-slate-500 space-y-2">
+            <Loader2 className="w-7 h-7 animate-spin text-indigo-400" />
+            <p className="text-xs font-mono">Loading queue items...</p>
           </div>
         ) : filteredJobs.length === 0 ? (
-          <div className="py-14 px-4 text-center rounded-2xl border border-gray-200 bg-white flex flex-col items-center justify-center space-y-3 shadow-xs">
-            <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500">
+          <div className="py-14 px-4 text-center rounded-2xl border border-white/[0.08] bg-[#0e1320]/60 flex flex-col items-center justify-center space-y-3 backdrop-blur-xs shadow-lg">
+            <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-slate-400">
               <Inbox className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-gray-900">No jobs found</h3>
-              <p className="text-xs text-gray-500 mt-1 max-w-sm">
+              <h3 className="text-sm font-semibold text-white">No jobs found</h3>
+              <p className="text-xs text-slate-400 mt-1 max-w-sm">
                 {searchQuery || selectedStatus !== 'all'
                   ? 'No jobs match your filter criteria.'
                   : 'Your job queue is currently empty.'}
@@ -254,7 +254,7 @@ export function App() {
             <div className="flex flex-wrap items-center gap-2 pt-1">
               <button
                 onClick={() => setIsCreateOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-gray-900 hover:bg-black rounded-lg transition cursor-pointer shadow-xs"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 rounded-lg transition cursor-pointer shadow-[0_0_12px_rgba(99,102,241,0.3)]"
               >
                 <Plus className="w-3.5 h-3.5" />
                 Create Job
@@ -263,9 +263,9 @@ export function App() {
               {jobs.length === 0 && (
                 <button
                   onClick={handleSeedDemoJobs}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 hover:text-gray-900 bg-white hover:bg-gray-50 border border-gray-300 rounded-lg transition cursor-pointer shadow-xs"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] rounded-lg transition cursor-pointer"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                   Seed Demo Jobs
                 </button>
               )}
@@ -294,7 +294,7 @@ export function App() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-gray-200 bg-white py-3.5 px-6 text-center text-xs text-gray-400">
+      <footer className="border-t border-white/[0.06] bg-[#090d16]/70 backdrop-blur-xs py-3.5 px-6 text-center text-xs text-slate-500">
         Mini Job Queue Dashboard • React + NestJS + SQLite with Atomic CAS Concurrency Control
       </footer>
 
