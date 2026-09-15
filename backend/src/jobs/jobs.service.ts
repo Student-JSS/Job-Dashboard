@@ -245,20 +245,17 @@ export class JobsService {
   }
 
   /**
-   * Concurrency demonstration:
-   * Fires two concurrent status transition requests simultaneously against the same job
-   * to prove that atomic locking prevents race conditions.
+   * Helper to test concurrent status updates on a job.
    */
   async simulateRaceCondition(id: string) {
     const job = await this.findOne(id);
 
     if (job.status !== JobStatus.PENDING) {
       throw new BadRequestException(
-        `Race condition simulation requires a job in 'pending' status. Current status is '${job.status}'.`,
+        `Job must be in 'pending' status to test concurrent transitions. Current status: '${job.status}'.`,
       );
     }
 
-    // Launch two simultaneous transition attempts to 'running'
     const [req1, req2] = await Promise.allSettled([
       this.updateStatus(id, { status: JobStatus.RUNNING }),
       this.updateStatus(id, { status: JobStatus.RUNNING }),
@@ -272,13 +269,13 @@ export class JobsService {
         };
       }
       return {
-        outcome: 'CAUGHT CONFLICT (409 Conflict)',
+        outcome: 'CONFLICT (409 Conflict)',
         error: res.reason?.response || res.reason?.message,
       };
     };
 
     return {
-      summary: 'Race condition simulation completed: One request won the atomic CAS write, while the other was safely caught with a 409 Conflict.',
+      summary: 'Concurrent update result: one request succeeded, concurrent request returned 409.',
       jobId: id,
       requestA: formatResult(req1),
       requestB: formatResult(req2),

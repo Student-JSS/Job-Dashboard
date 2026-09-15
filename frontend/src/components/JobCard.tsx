@@ -167,7 +167,7 @@ export const JobCard: React.FC<JobCardProps> = ({
               <button
                 onClick={handleSimulateClick}
                 disabled={actionLoading !== null}
-                title="Simulate 2 browser tabs hitting Start Running at the exact same millisecond"
+                title="Test concurrent status update"
                 className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/25 transition disabled:opacity-50 cursor-pointer"
               >
                 {actionLoading === 'race' ? (

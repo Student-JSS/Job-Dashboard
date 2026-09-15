@@ -59,13 +59,10 @@ export class JobsController {
   }
 
   @Patch(':id/status')
-  @ApiOperation({
-    summary:
-      'Update job status with strict state machine validation and atomic concurrency control',
-  })
+  @ApiOperation({ summary: 'Update job status' })
   @ApiOkResponse({ description: 'Job status updated successfully' })
   @ApiConflictResponse({
-    description: 'Concurrency race condition or invalid state transition',
+    description: 'Conflict: invalid transition or concurrent update',
   })
   @ApiNotFoundResponse({ description: 'Job not found' })
   updateStatus(
@@ -85,10 +82,7 @@ export class JobsController {
   }
 
   @Post(':id/simulate-race')
-  @ApiOperation({
-    summary:
-      'Simulate two browser tabs trying to transition a pending job to running at the exact same moment',
-  })
+  @ApiOperation({ summary: 'Simulate concurrent status updates on a job' })
   simulateRaceCondition(@Param('id') id: string) {
     return this.jobsService.simulateRaceCondition(id);
   }

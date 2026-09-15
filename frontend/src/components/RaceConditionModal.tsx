@@ -35,11 +35,11 @@ export const RaceConditionModal: React.FC<RaceConditionModalProps> = ({
             </div>
             <div>
               <h3 className="text-sm font-semibold text-white">
-                Race Condition Simulation
+                Concurrent Update Test
               </h3>
               <p className="text-[11px] text-slate-400 mt-0.5">
-                Two browser tabs sent concurrent PATCH requests to change status to{' '}
-                <span className="text-cyan-400 font-mono">running</span>.
+                Two requests attempted to transition this job to{' '}
+                <span className="text-cyan-400 font-mono">running</span> simultaneously.
               </p>
             </div>
           </div>
@@ -55,24 +55,24 @@ export const RaceConditionModal: React.FC<RaceConditionModalProps> = ({
         <div className="mt-4 p-3.5 rounded-xl bg-indigo-950/30 border border-indigo-500/25 flex items-start gap-2.5">
           <ShieldCheck className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
           <div className="text-xs text-slate-300 leading-relaxed">
-            <span className="font-semibold text-white">Atomic CAS Guard Active: </span>
-            The database matched only the first request with{' '}
+            <span className="font-semibold text-white">Atomic CAS Check: </span>
+            The database matched the first request using{' '}
             <code className="bg-black/40 px-1.5 py-0.5 rounded text-amber-300 font-mono text-[11px]">
               WHERE id = :id AND status = 'pending'
             </code>
-            . The second request detected 0 rows updated and returned an HTTP 409 Conflict. State integrity remained 100% consistent.
+            . The concurrent request updated 0 rows and returned an HTTP 409 Conflict. State integrity remained consistent.
           </div>
         </div>
 
         {/* Side-by-side comparison */}
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-          {/* Tab 1 */}
+          {/* Request A */}
           <div className="p-3.5 rounded-xl border border-emerald-500/30 bg-emerald-950/20">
             <div className="flex items-center justify-between pb-2 border-b border-emerald-500/20">
               <div className="flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                 <span className="text-xs font-semibold text-emerald-300">
-                  Tab 1 (Request A)
+                  Request A (Committed)
                 </span>
               </div>
               <span className="text-[11px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono font-semibold">
@@ -89,13 +89,13 @@ export const RaceConditionModal: React.FC<RaceConditionModalProps> = ({
             </div>
           </div>
 
-          {/* Tab 2 */}
+          {/* Request B */}
           <div className="p-3.5 rounded-xl border border-rose-500/30 bg-rose-950/20">
             <div className="flex items-center justify-between pb-2 border-b border-rose-500/20">
               <div className="flex items-center gap-1.5">
                 <AlertTriangle className="w-4 h-4 text-rose-400" />
                 <span className="text-xs font-semibold text-rose-300">
-                  Tab 2 (Request B)
+                  Request B (Conflict)
                 </span>
               </div>
               <span className="text-[11px] px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 font-mono font-semibold">

@@ -162,7 +162,7 @@ export const JobTableView: React.FC<JobTableViewProps> = ({
                           <button
                             onClick={() => handleSimulateClick(job.id)}
                             disabled={actionLoading !== null}
-                            title="Simulate 2 concurrent tabs hitting Start"
+                            title="Test concurrent status update"
                             className="px-2 py-1 rounded-md bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/25 text-[11px] inline-flex items-center gap-1 transition cursor-pointer"
                           >
                             {actionLoading === `${job.id}-race` ? (
