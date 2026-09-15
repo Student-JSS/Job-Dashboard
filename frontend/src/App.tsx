@@ -5,6 +5,7 @@ import { Header } from './components/Header';
 import { StatusCounters } from './components/StatusCounters';
 import { JobFilterBar } from './components/JobFilterBar';
 import { JobCard } from './components/JobCard';
+import { JobTableView } from './components/JobTableView';
 import { CreateJobModal } from './components/CreateJobModal';
 import { RaceConditionModal } from './components/RaceConditionModal';
 import {
@@ -28,13 +29,13 @@ export function App() {
 
   const [selectedStatus, setSelectedStatus] = useState<JobStatus | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
 
   const [isCreateOpen, setIsCreateOpen] = useState<boolean>(false);
   const [raceResult, setRaceResult] = useState<SimulationResult | null>(null);
   const [notification, setNotification] = useState<NotificationMessage | null>(null);
   const [autoRefresh, setAutoRefresh] = useState<boolean>(true);
 
-  // Show notification helper
   const showNotice = (
     type: NotificationMessage['type'],
     message: string,
@@ -77,12 +78,11 @@ export function App() {
     [],
   );
 
-  // Initial load
   useEffect(() => {
     loadData(false);
   }, [loadData]);
 
-  // Polling / Auto-refresh
+  // Auto-sync
   useEffect(() => {
     if (!autoRefresh) return;
     const interval = setInterval(() => {
@@ -91,13 +91,13 @@ export function App() {
     return () => clearInterval(interval);
   }, [autoRefresh, loadData]);
 
-  // Handlers
+  // Create job
   const handleCreateJob = async (input: { title: string; type: string }) => {
     try {
       const created = await api.createJob(input);
       showNotice(
         'success',
-        `Job "${created.title}" queued successfully in pending status.`,
+        `Job "${created.title}" added to queue in pending status.`,
         'Job Created',
       );
       await loadData(true);
@@ -107,6 +107,7 @@ export function App() {
     }
   };
 
+  // Update status
   const handleUpdateStatus = async (id: string, targetStatus: JobStatus) => {
     try {
       const targetJob = jobs.find((j) => j.id === id);
@@ -126,7 +127,7 @@ export function App() {
       if (err instanceof ApiError && err.statusCode === 409) {
         showNotice(
           'conflict',
-          err.message || 'Concurrency conflict detected. Refreshing latest state...',
+          err.message || 'Concurrency conflict detected. Refreshed with latest state.',
           'Atomic CAS Conflict (409)',
         );
       } else {
@@ -136,16 +137,18 @@ export function App() {
     }
   };
 
+  // Delete job
   const handleDeleteJob = async (id: string) => {
     try {
       await api.deleteJob(id);
-      showNotice('success', 'Job was permanently removed from queue.', 'Job Deleted');
+      showNotice('success', 'Job deleted successfully.', 'Job Removed');
       await loadData(true);
     } catch (err: any) {
       showNotice('error', err?.message || 'Failed to delete job');
     }
   };
 
+  // Simulate race
   const handleSimulateRace = async (id: string) => {
     try {
       const result = await api.simulateRaceCondition(id);
@@ -157,13 +160,14 @@ export function App() {
     }
   };
 
+  // Demo seeding
   const handleSeedDemoJobs = async () => {
     try {
       setIsRefreshing(true);
       const sampleJobs = [
         { title: 'Send Monthly Invoices', type: 'billing' },
         { title: 'Transcode 4K Video Segment', type: 'video_transcode' },
-        { title: 'Backup Postgres Database to S3', type: 'backup' },
+        { title: 'Backup Postgres Database to S3', type: 'cloud_backup' },
         { title: 'Generate User Engagement Summary', type: 'analytics' },
       ];
 
@@ -180,7 +184,7 @@ export function App() {
     }
   };
 
-  // Filter jobs based on selectedStatus & searchQuery
+  // Filter jobs
   const filteredJobs = jobs.filter((job) => {
     const matchesStatus =
       selectedStatus === 'all' ? true : job.status === selectedStatus;
@@ -194,7 +198,7 @@ export function App() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+    <div className="min-h-screen flex flex-col">
       {/* Header */}
       <Header
         backendOnline={backendOnline}
@@ -206,17 +210,11 @@ export function App() {
       />
 
       {/* Main Container */}
-      <main className="max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6 flex-1">
-        {/* Notification Banner */}
-        <NotificationBanner
-          notification={notification}
-          onDismiss={() => setNotification(null)}
-        />
-
+      <main className="max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 space-y-5 flex-1">
         {/* State Flow Diagram */}
         <StateFlowDiagram />
 
-        {/* Metrics Overview Cards */}
+        {/* Metrics Overview */}
         <StatusCounters
           stats={stats}
           selectedFilter={selectedStatus}
@@ -230,40 +228,42 @@ export function App() {
           searchQuery={searchQuery}
           onSearchChange={(val) => setSearchQuery(val)}
           totalFiltered={filteredJobs.length}
+          viewMode={viewMode}
+          onViewModeChange={(mode) => setViewMode(mode)}
         />
 
-        {/* Job Queue List */}
+        {/* Queue Display */}
         {isLoading ? (
-          <div className="py-20 flex flex-col items-center justify-center text-slate-500 space-y-3">
-            <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
-            <p className="text-sm">Loading jobs from database...</p>
+          <div className="py-20 flex flex-col items-center justify-center text-slate-500 space-y-2">
+            <Loader2 className="w-7 h-7 animate-spin text-indigo-500" />
+            <p className="text-xs">Loading queue items...</p>
           </div>
         ) : filteredJobs.length === 0 ? (
-          <div className="py-16 px-4 text-center rounded-2xl border border-slate-800/80 bg-slate-900/30 flex flex-col items-center justify-center space-y-4">
-            <div className="w-12 h-12 rounded-2xl bg-slate-800/80 flex items-center justify-center text-slate-400">
-              <Inbox className="w-6 h-6" />
+          <div className="py-14 px-4 text-center rounded-2xl border border-slate-800/80 bg-slate-900/30 flex flex-col items-center justify-center space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-slate-800/60 flex items-center justify-center text-slate-400">
+              <Inbox className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-semibold text-white">No jobs found</h3>
+              <h3 className="text-sm font-semibold text-white">No jobs found</h3>
               <p className="text-xs text-slate-400 mt-1 max-w-sm">
                 {searchQuery || selectedStatus !== 'all'
-                  ? 'No jobs match the current filters. Try changing your search query or status filter.'
-                  : 'Your job queue is currently empty. Create a new job or seed some sample jobs to get started.'}
+                  ? 'No jobs match your filter criteria.'
+                  : 'Your job queue is currently empty.'}
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-2 pt-2">
+            <div className="flex flex-wrap items-center gap-2 pt-1">
               <button
                 onClick={() => setIsCreateOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition cursor-pointer shadow-xs"
               >
                 <Plus className="w-3.5 h-3.5" />
-                Create First Job
+                Create Job
               </button>
 
               {jobs.length === 0 && (
                 <button
                   onClick={handleSeedDemoJobs}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition cursor-pointer"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                   Seed Demo Jobs
@@ -271,8 +271,15 @@ export function App() {
               )}
             </div>
           </div>
+        ) : viewMode === 'table' ? (
+          <JobTableView
+            jobs={filteredJobs}
+            onUpdateStatus={handleUpdateStatus}
+            onDelete={handleDeleteJob}
+            onSimulateRace={handleSimulateRace}
+          />
         ) : (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 gap-2.5">
             {filteredJobs.map((job) => (
               <JobCard
                 key={job.id}
@@ -287,21 +294,27 @@ export function App() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-900 py-4 px-6 text-center text-xs text-slate-500">
+      <footer className="border-t border-slate-900/80 py-3.5 px-6 text-center text-[11px] text-slate-500">
         Mini Job Queue Dashboard • React + NestJS + SQLite with Atomic CAS Concurrency Control
       </footer>
 
-      {/* Create Job Modal */}
+      {/* Create Modal */}
       <CreateJobModal
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
         onCreate={handleCreateJob}
       />
 
-      {/* Race Condition Inspector Modal */}
+      {/* Race Inspector Modal */}
       <RaceConditionModal
         result={raceResult}
         onClose={() => setRaceResult(null)}
+      />
+
+      {/* Floating Notification Toast */}
+      <NotificationBanner
+        notification={notification}
+        onDismiss={() => setNotification(null)}
       />
     </div>
   );
