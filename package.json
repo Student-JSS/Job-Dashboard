@@ -1,0 +1,24 @@
+{
+  "name": "mini-job-queue-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Mini Job Queue Management Dashboard built with React + NestJS + SQLite with atomic concurrency control",
+  "scripts": {
+    "start:backend": "cd backend && npm run start:dev",
+    "start:frontend": "cd frontend && npm run dev",
+    "build": "cd backend && npm run build && cd ../frontend && npm run build",
+    "test": "cd backend && npm test",
+    "test:backend": "cd backend && npm test"
+  },
+  "keywords": [
+    "nestjs",
+    "react",
+    "job-queue",
+    "state-machine",
+    "concurrency",
+    "prisma",
+    "sqlite"
+  ],
+  "author": "Shivam",
+  "license": "MIT"
+}

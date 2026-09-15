@@ -1,0 +1,27 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: job-queue-backend
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - DATABASE_URL=file:./dev.db
+    volumes:
+      - backend-data:/app/prisma
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: job-queue-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  backend-data:
