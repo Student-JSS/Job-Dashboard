@@ -179,16 +179,54 @@ npm run dev
 
 ---
 
-## Docker Setup
+## Deployment
 
-Run both services with Docker Compose:
+### Option 1: Docker Compose (Local or VPS)
+
+Run the full stack (NestJS API + React UI behind Nginx reverse proxy) with a single command:
 
 ```bash
-docker compose up --build
+docker compose up --build -d
 ```
 
-- Frontend: `http://localhost` (Port 80)
-- Backend: `http://localhost:3001`
+- **Frontend**: `http://localhost` (Port 80)
+- **Backend API**: `http://localhost:3001`
+- **Swagger Docs**: `http://localhost:3001/api/docs`
+
+To stop the containers:
+```bash
+docker compose down
+```
+
+---
+
+### Option 2: Cloud Deployment (Vercel + Render)
+
+#### Backend Deployment (Render - Free Web Service)
+1. Push your repository to GitHub.
+2. Log in to [Render](https://render.com) and click **New +** -> **Web Service**.
+3. Connect your GitHub repository.
+4. Configure the service:
+   - **Root Directory**: `backend`
+   - **Environment**: `Node`
+   - **Build Command**: `npm install && npx prisma generate && npx prisma db push && npm run build`
+   - **Start Command**: `npm run start:prod`
+5. Add Environment Variables:
+   - `NODE_ENV`: `production`
+   - `DATABASE_URL`: `file:./dev.db`
+6. Click **Deploy Web Service**. Once deployed, copy your backend URL (e.g. `https://your-backend.onrender.com`).
+
+#### Frontend Deployment (Vercel)
+1. Log in to [Vercel](https://vercel.com) and click **Add New...** -> **Project**.
+2. Select your repository.
+3. Configure the project:
+   - **Root Directory**: `frontend`
+   - **Framework Preset**: `Vite`
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `dist`
+4. Add Environment Variable:
+   - `VITE_API_URL`: Your Render backend URL (e.g. `https://your-backend.onrender.com`)
+5. Click **Deploy**.
 
 ---
 
