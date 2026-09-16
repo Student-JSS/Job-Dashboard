@@ -26,4 +26,7 @@ export class QueryJobsDto {
   @IsOptional()
   @IsString()
   search?: string;
+
+  @IsOptional()
+  _t?: any;
 }
