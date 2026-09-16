@@ -35,6 +35,8 @@ export function App() {
   const [raceResult, setRaceResult] = useState<SimulationResult | null>(null);
   const [notification, setNotification] = useState<NotificationMessage | null>(null);
   const [autoRefresh, setAutoRefresh] = useState<boolean>(true);
+  const [lastSyncedTime, setLastSyncedTime] = useState<string | null>(null);
+  const [autoSyncCountdown, setAutoSyncCountdown] = useState<number>(3);
 
   const showNotice = (
     type: NotificationMessage['type'],
@@ -54,13 +56,22 @@ export function App() {
     async (isSilent = false) => {
       try {
         if (!isSilent) setIsRefreshing(true);
+        // Ensure at least 450ms visible spinner animation on manual click
+        const minSpin = !isSilent ? new Promise((r) => setTimeout(r, 450)) : Promise.resolve();
+
         const [jobsData, statsData] = await Promise.all([
           api.getJobs(),
           api.getStats(),
+          minSpin,
         ]);
         setJobs(jobsData);
         setStats(statsData);
         setBackendOnline(true);
+        setLastSyncedTime(new Date().toLocaleTimeString());
+
+        if (!isSilent) {
+          showNotice('success', 'Queue updated with latest server state.', 'Refreshed');
+        }
       } catch (err: any) {
         setBackendOnline(false);
         if (!isSilent) {
@@ -82,14 +93,31 @@ export function App() {
     loadData(false);
   }, [loadData]);
 
-  // Auto-sync
+  // Auto-sync countdown ticker (1s interval)
   useEffect(() => {
     if (!autoRefresh) return;
-    const interval = setInterval(() => {
-      loadData(true);
-    }, 4000);
-    return () => clearInterval(interval);
+    const ticker = setInterval(() => {
+      setAutoSyncCountdown((prev) => {
+        if (prev <= 1) {
+          loadData(true);
+          return 3;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(ticker);
   }, [autoRefresh, loadData]);
+
+  const handleToggleAutoRefresh = () => {
+    setAutoRefresh((prev) => {
+      const next = !prev;
+      if (next) {
+        setAutoSyncCountdown(3);
+        loadData(true);
+      }
+      return next;
+    });
+  };
 
   // Create job
   const handleCreateJob = async (input: { title: string; type: string }) => {
@@ -206,7 +234,9 @@ export function App() {
         onRefresh={() => loadData(false)}
         isRefreshing={isRefreshing}
         autoRefresh={autoRefresh}
-        onToggleAutoRefresh={() => setAutoRefresh((prev) => !prev)}
+        onToggleAutoRefresh={handleToggleAutoRefresh}
+        lastSyncedTime={lastSyncedTime}
+        autoSyncCountdown={autoSyncCountdown}
       />
 
       {/* Main Container */}

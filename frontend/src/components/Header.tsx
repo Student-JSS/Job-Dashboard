@@ -8,6 +8,8 @@ interface HeaderProps {
   isRefreshing: boolean;
   autoRefresh: boolean;
   onToggleAutoRefresh: () => void;
+  lastSyncedTime: string | null;
+  autoSyncCountdown: number;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -17,10 +19,12 @@ export const Header: React.FC<HeaderProps> = ({
   isRefreshing,
   autoRefresh,
   onToggleAutoRefresh,
+  lastSyncedTime,
+  autoSyncCountdown,
 }) => {
   return (
     <header className="border-b border-white/[0.08] bg-[#090d16]/85 backdrop-blur-md sticky top-0 z-40">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
         {/* Brand & Status */}
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 flex items-center justify-center text-white shadow-[0_0_15px_rgba(99,102,241,0.4)]">
@@ -35,23 +39,31 @@ export const Header: React.FC<HeaderProps> = ({
                 v1.0
               </span>
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-slate-400">
-              <span
-                className={`w-1.5 h-1.5 rounded-full ${
-                  backendOnline === true
-                    ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]'
+            <div className="flex items-center gap-2 text-xs text-slate-400">
+              <span className="inline-flex items-center gap-1.5">
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    backendOnline === true
+                      ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]'
+                      : backendOnline === false
+                      ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]'
+                      : 'bg-slate-500'
+                  }`}
+                />
+                <span className="text-slate-400 text-[11px]">
+                  {backendOnline === true
+                    ? 'API Live'
                     : backendOnline === false
-                    ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]'
-                    : 'bg-slate-500'
-                }`}
-              />
-              <span className="text-slate-400 text-[11px]">
-                {backendOnline === true
-                  ? 'API Live'
-                  : backendOnline === false
-                  ? 'API Offline'
-                  : 'Connecting...'}
+                    ? 'API Offline'
+                    : 'Connecting...'}
+                </span>
               </span>
+
+              {lastSyncedTime && (
+                <span className="text-[11px] text-slate-500 hidden sm:inline font-mono">
+                  • Synced: {lastSyncedTime}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -70,35 +82,49 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="hidden sm:inline">Swagger API</span>
           </a>
 
-          {/* Auto Refresh toggle */}
+          {/* Auto Refresh toggle with live countdown */}
           <button
             onClick={onToggleAutoRefresh}
-            className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition cursor-pointer flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition cursor-pointer flex items-center gap-2 select-none ${
               autoRefresh
-                ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-300 shadow-[0_0_12px_rgba(99,102,241,0.15)]'
+                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.15)]'
                 : 'bg-white/[0.04] border-white/[0.08] text-slate-400 hover:text-slate-200'
             }`}
-            title="Auto-refresh every 4 seconds"
+            title={autoRefresh ? 'Click to pause auto-sync' : 'Click to enable auto-sync'}
           >
             <span
-              className={`w-1.5 h-1.5 rounded-full ${
-                autoRefresh ? 'bg-indigo-400 animate-ping' : 'bg-slate-500'
+              className={`w-2 h-2 rounded-full transition-all ${
+                autoRefresh
+                  ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] animate-pulse'
+                  : 'bg-slate-600'
               }`}
             />
-            <span className="hidden md:inline">Auto-Sync</span>
+            <span className="font-mono text-xs">
+              {autoRefresh ? (
+                autoSyncCountdown === 0 ? (
+                  'Syncing...'
+                ) : (
+                  `Auto-Sync (${autoSyncCountdown}s)`
+                )
+              ) : (
+                'Auto-Sync: Off'
+              )}
+            </span>
           </button>
 
-          {/* Refresh button */}
+          {/* Refresh button with guaranteed visible animation */}
           <button
             onClick={onRefresh}
             disabled={isRefreshing}
-            className="p-1.5 sm:px-3 sm:py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] rounded-lg transition disabled:opacity-50 cursor-pointer inline-flex items-center gap-1.5"
-            title="Refresh jobs"
+            className="px-3 py-1.5 text-xs font-medium text-slate-200 hover:text-white bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.1] rounded-lg transition disabled:opacity-50 cursor-pointer inline-flex items-center gap-1.5 select-none shadow-xs"
+            title="Refresh jobs from server"
           >
             <RefreshCw
-              className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-indigo-400' : 'text-slate-400'}`}
+              className={`w-3.5 h-3.5 transition-transform ${
+                isRefreshing ? 'animate-spin text-cyan-400' : 'text-slate-400'
+              }`}
             />
-            <span className="hidden sm:inline">Refresh</span>
+            <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
           </button>
 
           {/* Create Job CTA */}
