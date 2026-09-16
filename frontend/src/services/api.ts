@@ -23,12 +23,7 @@ class ApiError extends Error {
 }
 
 async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  // Append cache buster to GET requests to guarantee fresh database state
-  const isGet = !options?.method || options.method === 'GET';
-  const separator = endpoint.includes('?') ? '&' : '?';
-  const url = isGet
-    ? `${API_BASE_URL}${endpoint}${separator}_t=${Date.now()}`
-    : `${API_BASE_URL}${endpoint}`;
+  const url = `${API_BASE_URL}${endpoint}`;
 
   try {
     const res = await fetch(url, {
