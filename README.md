@@ -1,149 +1,230 @@
-# Mini Job Queue Dashboard
+# Mini Job Queue Management Dashboard
 
-A lightweight job queue management dashboard built with NestJS, React, and SQLite (via Prisma ORM). Implements strict linear state transitions and atomic compare-and-swap (CAS) queries to prevent race conditions during concurrent status updates.
+A full-stack, real-time job queue management dashboard built with **NestJS**, **React 19**, and **SQLite (Prisma ORM)**. It demonstrates robust engineering patterns for handling background jobs, including strict linear state transitions, atomic Compare-And-Swap (CAS) query updates to eliminate race conditions, real-time auto-synchronization, and an in-app race condition simulator.
 
 ---
 
-## Tech Stack
+## Key Features
 
-- **Backend**: NestJS, Prisma ORM, SQLite, Class Validator, Vitest
-- **Frontend**: React 19, TypeScript, Vite, Tailwind CSS, Lucide React
-- **DevOps**: Docker, Docker Compose, Nginx
+- **Strict State Machine Lifecycle**: Enforces valid transitions (`pending` → `running` → `completed` / `failed`). Terminal states (`completed`, `failed`) are immutable.
+- **Atomic Concurrency Control**: Uses atomic database Compare-And-Swap (CAS) queries with version incrementing to guarantee zero race conditions when concurrent workers or tabs update the same job.
+- **In-App Race Simulator**: Dedicated endpoint and UI test tool (`POST /jobs/:id/simulate-race`) that fires two simultaneous status update requests in parallel to empirically demonstrate `200 OK` vs. `409 Conflict` resolution.
+- **Real-Time Auto-Sync & Polling**: Configurable 3-second background auto-synchronization with visual countdown timer, manual refresh controls, and last-synced indicators.
+- **Flexible UI Views**: Toggle between **Card View** and **Table View** with live statistics counter cards (`Total`, `Pending`, `Running`, `Completed`, `Failed`).
+- **Comprehensive Filtering & Search**: Instant client and server filtering by status (`ALL`, `PENDING`, `RUNNING`, `COMPLETED`, `FAILED`) and live search by title, type, or UUID.
+- **Interactive OpenAPI / Swagger Documentation**: Built-in Swagger UI available at `/api/docs` for testing all endpoints and reviewing request/response schemas.
+- **Docker Ready**: Pre-configured `Dockerfile` for backend and frontend, plus a root `docker-compose.yml` with Nginx reverse proxy integration.
+
+---
+
+## State Machine & Lifecycle Rules
+
+### State Diagram
+
+Jobs follow a strict linear transition path:
+
+```text
+       ┌───────────┐
+       │  PENDING  │  (Initial state)
+       └─────┬─────┘
+             │
+             ▼
+       ┌───────────┐
+       │  RUNNING  │  (In-progress)
+       └─────┬─────┘
+             ├──────────────────────┐
+             ▼                      ▼
+      ┌─────────────┐        ┌────────────┐
+      │  COMPLETED  │        │   FAILED   │  (Terminal states)
+      └─────────────┘        └────────────┘
+```
+
+### Transition Matrix
+
+| From State | Allowed Target States | Disallowed Target States | Response on Violation |
+| --- | --- | --- | --- |
+| `pending` | `running` | `completed`, `failed`, `pending` | `409 Conflict` |
+| `running` | `completed`, `failed` | `pending`, `running` | `400 Bad Request` / `409 Conflict` |
+| `completed` | *None (Terminal)* | Any | `409 Conflict` |
+| `failed` | *None (Terminal)* | Any | `409 Conflict` |
+
+---
+
+## Concurrency & Race Condition Resolution
+
+### The "Two-Tab / Two-Worker" Problem
+
+If two background workers or browser tabs view a job in `pending` status at the exact same millisecond and both attempt to claim it ("Start Job"), standard `SELECT` followed by `UPDATE` queries suffer from race conditions:
+
+1. **Request A** reads job (`status = pending`).
+2. **Request B** reads job (`status = pending`).
+3. **Request A** updates job to `running`.
+4. **Request B** updates job to `running`.
+5. **Result**: Both workers believe they own the job, resulting in duplicate background processing or corrupted data.
+
+### The Atomic CAS Solution
+
+This system eliminates race conditions directly at the database layer using Prisma's atomic `updateMany`:
+
+```typescript
+const result = await this.prisma.job.updateMany({
+  where: {
+    id: id,
+    status: JobStatus.PENDING, // Conditional execution check
+  },
+  data: {
+    status: JobStatus.RUNNING,
+    version: { increment: 1 },  // Optimistic revision control
+  },
+});
+```
+
+- **Execution**: The database evaluates the `WHERE` condition and applies the `UPDATE` in a single atomic transaction.
+- **Winner (Request A)**: Matches the `pending` status, updates the row to `running`, increments `version`. `result.count === 1`. Returns `200 OK`.
+- **Loser (Request B)**: Finds the row is no longer `pending`. `result.count === 0`. The service detects zero modified rows, queries the current state, and returns `409 Conflict` ("Job was already updated by another process").
+
+---
+
+## Technology Stack
+
+### Backend
+- **Framework**: NestJS 12 (TypeScript, REST)
+- **Database & ORM**: SQLite via Prisma ORM 6
+- **Validation**: `class-validator` & `class-transformer`
+- **Documentation**: Swagger / OpenAPI 12 (`@nestjs/swagger`)
+- **Testing**: Vitest 4, Supertest
+
+### Frontend
+- **Framework**: React 19, TypeScript, Vite 8
+- **Styling**: Tailwind CSS 4 (Obsidian & Indigo minimal theme)
+- **Icons**: Lucide React
+- **API Client**: Custom typed `fetch` wrapper with unified error handling
+
+### DevOps & Deployment
+- **Containers**: Docker (Multi-stage Node 20 Alpine builds), Nginx Alpine
+- **Orchestration**: Docker Compose
+- **Platform Presets**: Vercel (Frontend SPA), Render (Backend Web Service)
 
 ---
 
 ## Project Structure
 
-```
+```text
 .
 ├── backend/
 │   ├── prisma/
-│   │   └── schema.prisma         # Prisma SQLite schema with version column
+│   │   └── schema.prisma          # Prisma SQLite schema & models
 │   ├── src/
 │   │   ├── jobs/
-│   │   │   ├── dto/              # Request validation DTOs
-│   │   │   ├── entities/         # State machine rules & types
-│   │   │   ├── jobs.controller.ts
-│   │   │   ├── jobs.service.ts   # Atomic CAS update logic
-│   │   │   └── jobs.service.spec.ts
-│   │   ├── prisma/
-│   │   ├── app.module.ts
-│   │   └── main.ts
-│   └── Dockerfile
+│   │   │   ├── dto/               # Request validation DTOs
+│   │   │   ├── entities/          # Job entity & transition definitions
+│   │   │   ├── jobs.controller.ts # REST API routes & Swagger metadata
+│   │   │   ├── jobs.service.ts    # Business logic & atomic CAS queries
+│   │   │   └── jobs.service.spec.ts # Vitest unit & concurrency tests
+│   │   ├── prisma/                # Prisma service module
+│   │   ├── app.module.ts          # Root NestJS module
+│   │   └── main.ts                # Bootstrap, CORS, ValidationPipe, Swagger setup
+│   ├── Dockerfile                 # Production backend container build
+│   └── package.json
 ├── frontend/
 │   ├── src/
-│   │   ├── components/           # UI components (cards, table, modals, badges)
-│   │   ├── services/api.ts       # Typed API client
-│   │   ├── types/job.ts
-│   │   └── App.tsx
-│   ├── nginx.conf
-│   └── Dockerfile
-├── docker-compose.yml
+│   │   ├── components/            # UI components (Header, Cards, Table, Modals)
+│   │   ├── services/api.ts        # Typed API service layer
+│   │   ├── types/job.ts           # Shared TypeScript interfaces
+│   │   └── App.tsx                # Dashboard layout & state orchestration
+│   ├── vercel.json                # Vercel SPA rewrite rules
+│   ├── nginx.conf                 # Nginx reverse proxy configuration
+│   ├── Dockerfile                 # Production frontend container build
+│   └── package.json
+├── docker-compose.yml             # Full-stack local orchestration
+├── package.json                   # Root workspace scripts
 └── README.md
 ```
 
 ---
 
-## State Machine & Concurrency Design
+## Database Schema
 
-### State Lifecycle
-Jobs follow a strict linear transition path:
+Defined in `backend/prisma/schema.prisma`:
 
+```prisma
+model Job {
+  id        String   @id @default(uuid())
+  title     String
+  type      String
+  status    String   @default("pending")
+  version   Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}
 ```
-pending -> running -> completed
-                   -> failed
-```
-
-- A job starts in `pending`.
-- `pending` can only transition to `running`.
-- `running` can transition to either `completed` or `failed`.
-- `completed` and `failed` are terminal states and cannot be transitioned again.
-- Jobs cannot be reverted back to `pending`.
 
 ---
 
-### Concurrency & State Enforcement Details
+## Local Setup & Quickstart
 
-#### 1. Enforcement Layer
-State transition rules are enforced directly at the **backend service and database query layer**. 
+### Prerequisites
+- **Node.js**: v20 or newer
+- **npm**: v9 or newer
 
-While the React UI disables unavailable action buttons for a better user experience, frontend checks can be bypassed by calling the API directly (e.g. via `curl` or Postman). Enforcing transitions inside the database update ensures the system remains consistent regardless of the client.
+### 1. Backend Setup
 
-#### 2. Direct API Calls & Validation
-If a request bypasses the frontend and hits the API directly:
-- Invalid statuses or missing fields are caught by NestJS `ValidationPipe` and return `400 Bad Request`.
-- Transitions targeting `pending` return `400 Bad Request`.
-- Attempts to transition a `completed` or `failed` job return `409 Conflict`.
-- Invalid state transitions (e.g. `pending` directly to `completed`) return `409 Conflict`.
-
-#### 3. Concurrent Requests (The Two-Tab Problem)
-If two users or tabs see a job as `pending` and attempt to start it at the same time, naive code (`SELECT` then `UPDATE`) can suffer from a race condition where both see `pending` and both execute `UPDATE`.
-
-To prevent this, status transitions use an **Atomic Compare-And-Swap (CAS)** query:
-
-```typescript
-const result = await this.prisma.job.updateMany({
-  where: {
-    id,
-    status: JobStatus.PENDING, // Must still be pending at execution time
-  },
-  data: {
-    status: JobStatus.RUNNING,
-    version: { increment: 1 },
-  },
-});
+```bash
+cd backend
+npm install
+npx prisma generate
+npx prisma db push
+npm run start:dev
 ```
 
-- **Request 1** commits first: updates status to `running`, increments `version`. `result.count === 1`. Returns `200 OK`.
-- **Request 2** executes: the row is no longer `pending`. `result.count === 0`. The server queries the latest state and returns `409 Conflict` explaining that the job was already updated.
-- Zero race conditions, no inconsistent state.
+- **Backend API**: `http://localhost:3001`
+- **Swagger Documentation**: `http://localhost:3001/api/docs`
 
-#### 4. Preventing Inconsistent States
-- Atomic conditional writes (`WHERE id = :id AND status IN (...)`) guarantee that only 1 process can claim the transition.
-- An integer `version` field tracks state revisions.
-- Deterministic HTTP responses (`409 Conflict`) inform the client to refresh its state.
+### 2. Frontend Setup
 
----
+Open a new terminal window:
 
-## Production Improvements
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-### 1. In-App Concurrency Tester
-The dashboard includes an inline test button (`Simulate Race`) and endpoint (`POST /jobs/:id/simulate-race`). It fires two simultaneous status updates to the same job in parallel (`Promise.allSettled`), displaying how the atomic CAS query resolves the collision with 1 success (200) and 1 conflict (409).
-
-### 2. Auto-Sync Polling
-The dashboard polls every 4 seconds (toggleable in the header), ensuring that status changes made by background processes or another user are reflected without requiring manual page reloads.
-
-### 3. Swagger / OpenAPI Documentation
-Interactive API docs are available at `/api/docs` for testing all endpoints and inspecting schemas.
+- **Frontend Dashboard**: `http://localhost:5173`
 
 ---
 
 ## API Reference
 
-Base URL: `http://localhost:3001` (or `/api` via frontend proxy)
+Base URL: `http://localhost:3001` (or relative `/api` when proxying via Nginx)
 
 | Method | Endpoint | Description | Status Codes |
-|---|---|---|---|
-| `GET` | `/` | Health check & API info | `200` |
-| `POST` | `/jobs` | Create a job (`pending`) | `201`, `400` |
-| `GET` | `/jobs` | Get all jobs (`?status=`, `?type=`, `?search=`) | `200` |
-| `GET` | `/jobs/stats` | Status count breakdown | `200` |
-| `GET` | `/jobs/:id` | Get job by ID | `200`, `404` |
-| `PATCH` | `/jobs/:id/status` | Update job status with CAS check | `200`, `400`, `404`, `409` |
+| --- | --- | --- | --- |
+| `GET` | `/` | Health check & service info | `200` |
+| `POST` | `/jobs` | Create a new job (`pending`) | `201`, `400` |
+| `GET` | `/jobs` | List jobs (`?status=`, `?search=`) | `200` |
+| `GET` | `/jobs/stats` | Retrieve total and status counts | `200` |
+| `GET` | `/jobs/:id` | Get job details by ID | `200`, `404` |
+| `PATCH` | `/jobs/:id/status` | Execute atomic status transition | `200`, `400`, `404`, `409` |
 | `DELETE` | `/jobs/:id` | Delete job by ID | `200`, `404` |
-| `POST` | `/jobs/:id/simulate-race` | Trigger 2 concurrent updates on a job | `200`, `400` |
+| `POST` | `/jobs/:id/simulate-race` | Trigger 2 parallel updates to verify CAS lock | `200`, `400` |
 
 ### Sample Payloads
 
-**Create a Job (`POST /jobs`):**
+#### Create Job (`POST /jobs`)
+
 ```json
 {
-  "title": "Monthly Invoices",
-  "type": "billing"
+  "title": "Process Monthly Payroll",
+  "type": "payroll_processing"
 }
 ```
 
-**Update Status (`PATCH /jobs/:id/status`):**
+#### Update Job Status (`PATCH /jobs/:id/status`)
+
 ```json
 {
   "status": "running"
@@ -152,48 +233,39 @@ Base URL: `http://localhost:3001` (or `/api` via frontend proxy)
 
 ---
 
-## Quickstart
+## Automated Testing
 
-### Prerequisites
-- Node.js 18+
-- npm 9+
+Run the Vitest suite in the backend directory:
 
-### 1. Run Backend
 ```bash
 cd backend
-npm install
-npx prisma db push
-npm run start:dev
+npm test
 ```
-- API: `http://localhost:3001`
-- Swagger Docs: `http://localhost:3001/api/docs`
 
-### 2. Run Frontend
-In a separate terminal:
-```bash
-cd frontend
-npm install
-npm run dev
-```
-- Frontend: `http://localhost:5173`
+### Test Coverage Highlights
+- Default state initialization on job creation (`pending`, `version: 1`).
+- Valid transitions (`pending` → `running` → `completed`/`failed`).
+- Rejection of illegal transitions (`pending` directly to `completed`).
+- Immutability enforcement on terminal states (`completed`, `failed`).
+- Parallel race condition simulation asserting 1 success (`200`) and 1 conflict (`409`).
 
 ---
 
-## Deployment
+## Deployment Guide
 
 ### Option 1: Docker Compose (Local or VPS)
 
-Run the full stack (NestJS API + React UI behind Nginx reverse proxy) with a single command:
+To launch both frontend, backend, and Nginx proxy in isolated containers:
 
 ```bash
 docker compose up --build -d
 ```
 
-- **Frontend**: `http://localhost` (Port 80)
+- **Frontend Dashboard**: `http://localhost` (Port 80)
 - **Backend API**: `http://localhost:3001`
 - **Swagger Docs**: `http://localhost:3001/api/docs`
 
-To stop the containers:
+To stop the services:
 ```bash
 docker compose down
 ```
@@ -202,56 +274,37 @@ docker compose down
 
 ### Option 2: Cloud Deployment (Vercel + Render)
 
-#### Backend Deployment (Render - Free Web Service)
-1. Push your repository to GitHub.
-2. Log in to [Render](https://render.com) and click **New +** -> **Web Service**.
-3. Connect your GitHub repository.
-4. Configure the service:
+#### Backend (Render Web Service)
+1. Push the repository to GitHub.
+2. Create a **New Web Service** on Render.
+3. Connect your repository and configure:
    - **Root Directory**: `backend`
-   - **Environment**: `Node`
    - **Build Command**: `npm install && npx prisma generate && npx prisma db push && npm run build`
    - **Start Command**: `npm run start:prod`
-5. Add Environment Variables:
-   - `NODE_ENV`: `production`
-   - `DATABASE_URL`: `file:./dev.db`
-6. Click **Deploy Web Service**. Once deployed, copy your backend URL (e.g. `https://your-backend.onrender.com`).
+4. Environment Variables:
+   - `NODE_ENV` = `production`
+   - `DATABASE_URL` = `file:./dev.db`
 
-#### Frontend Deployment (Vercel)
-1. Log in to [Vercel](https://vercel.com) and click **Add New...** -> **Project**.
-2. Select your repository.
-3. Configure the project:
+#### Frontend (Vercel)
+1. Create a **New Project** on Vercel and select your GitHub repository.
+2. Configure:
    - **Root Directory**: `frontend`
    - **Framework Preset**: `Vite`
    - **Build Command**: `npm run build`
    - **Output Directory**: `dist`
-4. Add Environment Variable:
-   - `VITE_API_URL`: Your Render backend URL (e.g. `https://your-backend.onrender.com`)
-5. Click **Deploy**.
+3. Environment Variables:
+   - `VITE_API_URL` = `https://<your-render-backend-url>.onrender.com`
 
 ---
 
-## Running Tests
+## Design Trade-offs & Architecture Notes
 
-Run the backend test suite:
-
-```bash
-cd backend
-npm test
-```
-
-Tests cover:
-- Creation and default `pending` status
-- Valid transitions (`pending` -> `running` -> `completed` / `failed`)
-- Rejection of invalid transitions and terminal state changes
-- Concurrent race conditions (asserting 1 success, 1 conflict)
-- Deletion and 404 handling
+1. **SQLite with Prisma**: Selected for instant zero-dependency local execution. In high-throughput distributed production environments, Prisma allows swapping to PostgreSQL simply by changing the `provider` in `schema.prisma`.
+2. **Polling vs. WebSockets**: Polling was chosen because it is stateless, resilient against network drops, auto-reconnecting, and ideal for standard dashboard monitoring without persistent socket connection overhead.
+3. **Database-Level State Enforcement**: Transition rules are enforced inside the database update queries, guaranteeing data integrity even if API endpoints are called directly via Postman or `curl`.
 
 ---
 
-## Trade-offs & Notes
+## License
 
-1. **SQLite with Prisma**:
-   Chosen for local setup simplicity with zero external service dependencies. In production with high write throughput, changing the database provider to PostgreSQL requires updating only the `provider` line in `prisma/schema.prisma`. The atomic CAS queries remain the same.
-
-2. **Polling vs. WebSockets**:
-   Lightweight polling was chosen over WebSockets because it is stateless, auto-reconnects cleanly, and does not require managing persistent socket connections across instances.
+This project is licensed under the MIT License.
